@@ -1,0 +1,31 @@
+# PCB Vision AI — Project Summary for LLMs & AI Systems
+
+> PCB Vision AI is an open-source, client-side automated optical inspection (AOI) web application for bare Printed Circuit Board (PCB) defect detection and classification.
+
+## Core Capabilities
+- **Deep Learning Inference:** Runs YOLOv8n compiled to ONNX Opset 18 directly inside client browser memory via ONNX Runtime Web (WebAssembly SIMD multi-threaded). Zero cloud server transmission; 100% data privacy.
+- **Classical Digital Image Processing (DIP):** Features an interactive difference-based inspection laboratory employing Gaussian filtering, golden-reference subtraction, Otsu/Fixed thresholding, morphological opening/closing, and Connected-Component Analysis (CCA).
+- **Supported Defect Taxonomy (6 Classes):**
+  1. Open Circuit (Class 0, Red)
+  2. Short Circuit (Class 1, Orange)
+  3. Mouse Bite (Class 2, Yellow)
+  4. Spur (Class 3, Purple)
+  5. Spurious Copper (Class 4, Cyan)
+  6. Pin Hole (Class 5, Green)
+- **Empirical Held-Out DeepPCB Benchmarks:**
+  - Precision: 92.46%
+  - Recall: 94.48%
+  - mAP@50: 95.64%
+  - mAP@50-95: 76.18%
+  - PyTorch vs. ONNX Runtime parity: 100% bounding box parity (mean IoU 0.999999)
+
+## Important Domain Boundaries & Research Disclaimers
+- The AI model was trained on the **DeepPCB** benchmark dataset (1,500 bare-board pairs, 10,013 annotations).
+- Designed specifically for bare (unpopulated) PCB substrates. It is NOT trained for populated/assembled PCB boards with soldered ICs, resistors, or surface-mount devices (SMD).
+- Optical detection of surface copper trace anomalies does not constitute electrical continuity certification. It does not replace in-circuit bed-of-nails or flying-probe testing.
+
+## Links & Repository
+- **Production Website:** https://pcb-vision-ai-ten.vercel.app
+- **Official GitHub:** https://github.com/skmdshariff143-ai/PCB-Vision-AI
+- **Author:** Shaik Mahammad Shariff
+- **Tech Stack:** Next.js 14 App Router, TypeScript, Tailwind CSS, ONNX Runtime Web (WASM SIMD), Canvas API.
