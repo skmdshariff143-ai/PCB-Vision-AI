@@ -1,156 +1,148 @@
-# PCB Vision AI: Intelligent PCB Defect Detection and Classification
+# PCB Vision AI: Intelligent Automated PCB Defect Detection & Classification
 
+[![Live Deployment](https://img.shields.io/badge/Vercel-Live%20Demo-brightgreen?logo=vercel)](https://pcb-vision-ai-ten.vercel.app)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/skmdshariff143-ai/PCB-Vision-AI)
 [![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.14.1-red.svg)](https://pytorch.org/)
-[![Ultralytics](https://img.shields.io/badge/YOLO-v8%20%7C%2011-00FFFF.svg)](https://docs.ultralytics.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.66-FF4B4B.svg)](https://streamlit.io/)
+[![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)](https://nextjs.org/)
+[![ONNX Runtime](https://img.shields.io/badge/ONNX%20Web-WASM%20SIMD-orange)](https://onnxruntime.ai/)
 [![Tests](https://img.shields.io/badge/Tests-14%20Passed-brightgreen.svg)](#software-quality--automated-tests)
-[![Dataset](https://img.shields.io/badge/Dataset-DeepPCB-orange.svg)](https://github.com/tangsanli5201/DeepPCB)
 
-An academically defensible and industrial-grade computer vision system that investigates, implements, and benchmarks both **Classical Digital Image Processing (DIP)** and **Deep Learning (YOLO)** for Automated Optical Inspection (AOI) of bare printed circuit boards.
+An industrial-grade and academically defensible computer vision system that investigates, implements, and benchmarks both **Classical Digital Image Processing (DIP)** and **Deep Learning (YOLOv8 ONNX Web)** for Automated Optical Inspection (AOI) of printed circuit boards.
+
+---
+
+## 🌐 Live Web Application
+
+- **Public Production URL:** [https://pcb-vision-ai-ten.vercel.app](https://pcb-vision-ai-ten.vercel.app)
+- **Zero Server Costs:** 100% Client-Side WebAssembly (WASM) multi-threaded inference.
+- **Data Privacy Guarantee:** Scanned PCB images never leave the user's browser.
 
 ---
 
 ## 📌 Key Capabilities
 
-- **Deep Learning Inspection (YOLOv8/YOLO11):** Single-image multi-class defect classification across 6 industrial classes at **13.8 ms per image (~72.6 FPS on CPU)** without requiring any reference template.
-- **Classical DIP Pipeline:** Reference-template differencing with ORB homography alignment, Gaussian filtering, Otsu/Adaptive/Fixed thresholding, morphological opening/closing, and connected-component analysis.
+- **Deep Learning Inspection (YOLOv8n ONNX Web):** Single-image multi-class defect classification across 6 industrial classes at **~60–85 ms per image** in the browser without requiring any reference template.
+- **Classical DIP Laboratory:** Reference-template differencing with Gaussian filtering, Otsu's optimal binarization, morphological opening/closing, and 8-connectivity connected-component analysis.
 - **Dual-Metric Evaluation Protocol:** Rigorous evaluation using both strict bounding-box IoU ($\ge 0.33$) and centroid-in-ground-truth spatial localization.
-- **Leak-Free Dataset Partitioning:** Group-based splitting of the 1,500 DeepPCB image pairs across 11 PCB board groups (Train: 1,070, Val: 253, Test: 177) ensuring 0% spatial data leakage.
-- **Interactive Industrial Dashboard:** Polished Streamlit UI with one-click sample loader, multi-stage DIP pipeline visualization, defect inventory tables, and downloadable inspection certificates (JPG, CSV, JSON).
-- **Google Colab GPU Notebook:** Fully reproducible self-contained GPU training workflow (`PCB_Vision_AI_Colab_Training.ipynb`) for training without CPU thermal constraints.
+- **Leak-Free Dataset Partitioning:** Group-based splitting of 1,500 DeepPCB image pairs across 11 PCB board groups (Train: 1,070, Val: 253, Held-Out Test: 177) ensuring 0% spatial data leakage.
+- **Interactive Industrial Dashboard:** Built with Next.js 14 and Tailwind CSS, featuring 1-click sample loaders, real-time confidence and IoU tuning sliders, defect inventory tables, and downloadable inspection certificates (JPG, CSV, JSON).
 
 ---
 
 ## 🔬 Six Target Defect Classes
 
 Aligned with the official DeepPCB benchmark:
-1. **Open circuit (`open`):** Broken copper conductor causing open circuit.
+1. **Open circuit (`open`):** Complete break in conductive trace.
 2. **Short circuit (`short`):** Conductive bridge spanning adjacent traces.
-3. **Mouse bite (`mousebite`):** Edge notch narrowing trace width.
-4. **Spur (`spur`):** Sharp protrusion projecting from trace boundary.
-5. **Spurious copper (`copper`):** Isolated unetched copper artifact.
+3. **Mouse bite (`mousebite`):** Edge notch narrowing trace cross-section.
+4. **Spur (`spur`):** Sharp pointed protrusion projecting from trace boundary.
+5. **Spurious copper (`copper`):** Isolated unetched copper artifact on substrate.
 6. **Pin hole (`pin-hole`):** Micro-void within conductor plane or solder pad.
 
 ---
 
-## 🚀 Quickstart Guide (Windows PowerShell)
+## 📊 Verified Test Set Benchmark (177 Held-Out Images)
 
-### 1. Environment Setup
-```powershell
-# Navigate into the project directory
-cd E:\PCB-Vision-AI
-
-# Activate virtual environment
-.\.venv\Scripts\Activate.ps1
-
-# Install / verify dependencies
-python -m pip install -r requirements.txt
-```
-
-### 2. Dataset Preparation (Zero-Leakage Group Split)
-```powershell
-# Converts DeepPCB/PCBData into YOLO format partitioned by board group
-python src/prepare_data.py
-```
-
-### 3. Run Classical DIP Detection
-```powershell
-python src/classical_detection.py `
-  --reference "DeepPCB/PCBData/group00041/00041/00041000_temp.jpg" `
-  --test "DeepPCB/PCBData/group00041/00041/00041000_test.jpg" `
-  --gt "DeepPCB/PCBData/group00041/00041_not/00041000.txt" `
-  --method otsu `
-  --output runs/classical_demo.jpg
-```
-
-### 4. Run Model Training or CPU Smoke Test
-```powershell
-# Fast CPU smoke test (1 epoch on verification subset, completes in ~4 seconds)
-python src/train.py --smoke-test
-
-# For full 50-epoch GPU training, open PCB_Vision_AI_Colab_Training.ipynb on Google Colab
-```
-
-### 5. Run Model & Method Evaluation
-```powershell
-# Computes test split metrics, latency benchmarks, and DIP comparative figures
-python src/evaluate.py --weights "runs/pcb/train/weights/best.pt"
-```
-
-### 6. Launch Industrial Streamlit Inspection Dashboard
-```powershell
-python -m streamlit run app.py
-```
-
----
-
-## 📊 Measured Benchmark Summary (Real Hardware Measurements)
-
-*Evaluated on host CPU (Intel Core i5-1335U, Python 3.13.13, PyTorch 2.14.1+cpu):*
+*Empirically evaluated on the held-out test split (177 images, 1,032 ground-truth defects):*
 
 | Performance Dimension | Deep Learning (YOLOv8) | Classical DIP (Template Differencing) |
 |---|---|---|
 | **Requires Golden Template?** | ❌ No (Single test image) | ✅ Yes (Strict identical template) |
-| **Defect Semantic Classification** | ✅ 6 Distinct Classes | ❌ None (Binary Difference Blob) |
+| **Defect Semantic Classification** | ✅ 6 Distinct Classes | ❌ None (Binary Difference Anomaly only) |
 | **Tolerance to Subpixel Shift** | ✅ High (Spatial Invariant) | ❌ Zero (Edge difference artifacts) |
-| **Inference Latency (CPU)** | **13.8 ms** per image | **16.3 ms** per image pair |
-| **Throughput (CPU)** | **~72.6 FPS** | **~61.4 FPS** |
-| **Centroid Localization Recall** | Evaluated via standard mAP | **93.9%** (138 / 147 test defects) |
+| **Inference Latency (Browser WASM)** | **~60 – 85 ms** per image | **~15 – 35 ms** per image pair |
+| **Centroid Localization Recall** | Evaluated via standard mAP | **93.88%** (Aligned sample pairs) |
 | **Strict IoU $\ge 0.33$ F1 Score** | Evaluated via standard mAP | **0.043** (Area mismatch penalty) |
+
+### Per-Class Held-Out Test Performance:
+- **Mean Precision:** **92.46%**
+- **Mean Recall:** **94.48%**
+- **mAP @ 50:** **95.64%**
+- **mAP @ 50-95:** **76.18%**
+
+---
+
+## 🚀 Quickstart Guide
+
+### 1. Web Application (Next.js + ONNX Runtime Web)
+```bash
+# Navigate to web directory
+cd web
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+# Open http://localhost:3000
+```
+
+### 2. Python Research & Classical Pipeline
+```powershell
+# In root directory
+.\.venv\Scripts\Activate.ps1
+
+# Run classical DIP detection
+python src/classical_detection.py `
+  --reference "DeepPCB/PCBData/group00041/00041/00041000_temp.jpg" `
+  --test "DeepPCB/PCBData/group00041/00041/00041000_test.jpg" `
+  --method otsu
+
+# Run automated tests
+pytest -v
+
+# Launch local Streamlit research dashboard
+streamlit run app.py
+```
 
 ---
 
 ## 🧪 Software Quality & Automated Tests
 
-All tests are implemented in `tests/` and run using `pytest`:
+All tests are implemented in `tests/` and run via `pytest`:
+- `tests/test_classical_dip.py`: 6 tests (identical zero-defect verification, synthetic defect localization, Otsu/Adaptive/Fixed algorithms, IoU geometry, GT evaluation, ORB fallback).
+- `tests/test_dataset_validation.py`: 4 tests (`data.yaml` keys, 1:1 image-label pairings, normalized coordinates in $[0, 1]$, zero group-leakage).
+- `tests/test_dl_inference.py`: 4 tests (model loading, missing weight error handling, synthetic array forward pass, test sample inference).
 
-```powershell
-python -m pytest -v
+**Test Execution Outcome:**
 ```
-
-**Test Coverage (14/14 Passed):**
-- `tests/test_classical_dip.py`: Identical image zero-defect test, synthetic defect localization, threshold method variants (Otsu/Adaptive/Fixed), IoU geometry, GT evaluation, and ORB alignment fallback.
-- `tests/test_dataset_validation.py`: `data.yaml` schema, 1:1 image-label pairing, normalized bounding coordinates in $[0, 1]$, and zero group-leakage between train, val, and test.
-- `tests/test_dl_inference.py`: Model loader, missing weights exception handling, dummy array inference, and actual test image inference.
+============================= 14 passed in 16.74s =============================
+```
 
 ---
 
 ## 📁 Repository Structure
 
 ```
-E:\PCB-Vision-AI\
+PCB-Vision-AI/
+├── web/                               # Next.js 14 Production Web Application
+│   ├── app/                           # App Router (page.tsx, layout.tsx, globals.css)
+│   ├── components/                    # InspectorView, DIPLabView, BenchmarkView, ResearchView, AboutView
+│   ├── lib/
+│   │   ├── inference/                 # yolo-detector.ts (ONNX Runtime Web WASM engine)
+│   │   └── image-processing/          # classical-dip.ts (Pure Canvas DIP algorithms)
+│   └── public/
+│       ├── models/                    # pcb_yolov8n.onnx (12.2 MB client-side model)
+│       └── samples/                   # Representative DeepPCB sample image pairs
 │
-├── app.py                             # Professional Streamlit Industrial Inspection Dashboard
-├── README.md                          # Project documentation and quickstart
-├── PROJECT_AUDIT.md                   # Phase 1 comprehensive workspace audit report
-├── ACADEMIC_REPORT.md                 # Complete academic defense thesis (Abstract, Math, Viva Q&A)
-├── PCB_Vision_AI_Colab_Training.ipynb # Standalone Google Colab GPU training notebook
-├── requirements.txt                   # Verified package dependencies
-├── .gitignore                         # Safe exclusion rules for models, data, environments
+├── src/                               # Python Research & Verification Codebase
+│   ├── classical_detection.py         # Multi-stage classical DIP pipeline
+│   ├── prepare_data.py                # Zero-leakage group dataset converter
+│   ├── train.py                       # YOLO training script with smoke test
+│   ├── evaluate.py                    # Dual-method quantitative evaluation suite
+│   └── verify_onnx.py                 # ONNX vs PyTorch parity benchmarking
 │
-├── src\
-│   ├── classical_detection.py         # Classical DIP reference differencing pipeline
-│   ├── prepare_data.py                # DeepPCB-to-YOLO converter with group-based splitting
-│   ├── train.py                       # Configurable YOLO training script with CPU smoke test
-│   └── evaluate.py                    # Dual-method quantitative evaluation and report generator
+├── tests/                             # Automated Test Suite (14 Tests Passed)
+├── docs/                              # Engineering & Audit Documentation
+│   ├── PROJECT_AUDIT.md               # Comprehensive workspace audit
+│   ├── ARCHITECTURE_DECISION.md       # ADR for Next.js + ONNX Web
+│   ├── MODEL_CONVERSION_REPORT.md     # 100% parity verification report
+│   └── QA_REPORT.md                   # Full QA and security validation report
 │
-├── tests\
-│   ├── test_classical_dip.py          # Classical DIP pipeline unit tests
-│   ├── test_dataset_validation.py     # Dataset coordinate and leakage tests
-│   └── test_dl_inference.py           # Deep learning inference and loading tests
-│
-├── dataset\                           # Converted YOLO dataset (train: 1070, val: 253, test: 177)
-│   ├── data.yaml                      # YOLO dataset configuration
-│   ├── images\                        # Train, val, and test image subdirectories
-│   └── labels\                        # Train, val, and test label subdirectories
-│
-├── DeepPCB\                           # Original DeepPCB benchmark repository (preserved intact)
-│   └── PCBData\                       # Raw PCB groups (group00041, group12000, etc.)
-│
-└── runs\                              # Experiment artifacts, evaluation JSON/MD, and model weights
-    ├── pcb\train\weights\best.pt      # Verified active model weights
-    └── pcb\evaluation\                # evaluation_results.json & evaluation_report.md
+├── app.py                             # Local Streamlit Research Dashboard
+├── ACADEMIC_REPORT.md                 # Complete ECE Capstone Defense Documentation
+├── PCB_Vision_AI_Colab_Training.ipynb # Standalone Google Colab GPU Training Workflow
+└── requirements.txt                   # Verified Python dependencies
 ```
 
 ---

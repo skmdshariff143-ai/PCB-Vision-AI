@@ -18,6 +18,12 @@ web/.next/
 web/out/
 .next/
 
+# Vercel configuration & environment files
+.vercel/
+web/.vercel/
+.env*.local
+web/.env*.local
+
 # Deep learning raw checkpoints & experiment runs
 *.pt
 *.pth
