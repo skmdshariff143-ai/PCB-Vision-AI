@@ -14,7 +14,7 @@ from playwright.sync_api import sync_playwright
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-PREVIEW_URL = "https://pcb-vision-5w3n92zu1-shaik-mahammad-shariff-s-projects.vercel.app"
+PREVIEW_URL = "https://pcb-vision-ai-ten.vercel.app"
 
 VIEWPORTS = [
     {"name": "Narrow Mobile (iPhone SE)", "width": 320, "height": 568},
