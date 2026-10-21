@@ -1,0 +1,46 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node & Next.js build artifacts
+node_modules/
+web/node_modules/
+web/.next/
+web/out/
+.next/
+
+# Deep learning raw checkpoints & experiment runs
+*.pt
+*.pth
+*.engine
+runs/
+*.log
+
+# Root ONNX files (exclude except for web/public/models)
+*.onnx
+!web/public/models/*.onnx
+
+# Large research datasets & raw archives (Preserved locally, not committed to Git)
+dataset/
+DeepPCB/
+DeepPCB-master/
+*.zip
+*.tar.gz
+
+# Nested Git repository from research clone
+DeepPCB/.git
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
