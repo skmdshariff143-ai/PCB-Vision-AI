@@ -1,0 +1,15 @@
+.venv/
+dataset/
+data/
+DeepPCB/
+runs/
+__pycache__/
+*.pt
+*.onnx
+!web/public/models/pcb_yolov8n.onnx
+.pytest_cache/
+tests/
+node_modules/
+web/node_modules/
+.next/
+web/.next/
