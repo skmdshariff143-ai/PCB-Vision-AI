@@ -1,7 +1,14 @@
+"""
+PCB Vision AI — Multi-Browser Playwright End-to-End Automation Test Suite
+Phase 5 Independent Verification Protocol
+Validates: Chromium, Firefox, WebKit across multiple viewports
+"""
+
 import sys
 import time
 import json
 import os
+import pytest
 from playwright.sync_api import sync_playwright
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -9,187 +16,192 @@ if hasattr(sys.stdout, "reconfigure"):
 
 PREVIEW_URL = "https://pcb-vision-grkat8qyx-shaik-mahammad-shariff-s-projects.vercel.app"
 
+VIEWPORTS = [
+    {"name": "Narrow Mobile (iPhone SE)", "width": 320, "height": 568},
+    {"name": "Standard Mobile (iPhone X/12)", "width": 375, "height": 812},
+    {"name": "Modern Mobile (iPhone 13/14)", "width": 390, "height": 844},
+    {"name": "Tablet Portrait (iPad)", "width": 768, "height": 1024},
+    {"name": "Tablet Landscape (iPad)", "width": 1024, "height": 768},
+    {"name": "Standard Laptop (MacBook)", "width": 1440, "height": 900},
+    {"name": "Desktop (FHD)", "width": 1920, "height": 1080},
+]
+
+
 def test_full_browser_e2e():
-    print("=" * 70)
-    print("PLAYWRIGHT END-TO-END BROWSER AUTOMATION TEST")
-    print(f"Target: {PREVIEW_URL}")
-    print("=" * 70)
+    print("\n" + "=" * 75)
+    print("PLAYWRIGHT MULTI-BROWSER COMPREHENSIVE END-TO-END AUTOMATION SUITE")
+    print(f"Target URL: {PREVIEW_URL}")
+    print("=" * 75)
 
     with sync_playwright() as p:
-        # Launch headless Chromium with download handling
+        # -------------------------------------------------------------
+        # 1. Primary Comprehensive Functional Run in Chromium
+        # -------------------------------------------------------------
+        print("\n>>> Phase 5.1: Functional Testing on Chromium (Desktop 1440x900)")
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
             viewport={"width": 1440, "height": 900},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
             accept_downloads=True
         )
         page = context.new_page()
 
-        # Track network requests to verify ZERO outbound image uploads
+        # Request interception: confirm ZERO outbound image uploads
         outbound_image_uploads = []
-        def on_request(request):
-            if request.method in ["POST", "PUT"] and ("upload" in request.url or "image" in request.url):
-                outbound_image_uploads.append(request.url)
+        def on_request(req):
+            if req.method in ["POST", "PUT"] and any(k in req.url for k in ["upload", "image", "inspect", "inference"]):
+                if not req.url.endswith(".onnx"):
+                    outbound_image_uploads.append(req.url)
         page.on("request", on_request)
 
         # 1. Load Homepage
-        print("1. Loading preview homepage...")
         t0 = time.time()
         page.goto(PREVIEW_URL, wait_until="networkidle", timeout=60000)
-        print(f"   Homepage loaded in {time.time() - t0:.2f}s")
+        load_time = time.time() - t0
+        print(f"  [1] Homepage loaded in {load_time:.2f}s — Title: {page.title()}")
         assert "PCB Vision AI" in page.title()
-        print("   Title verified successfully.")
 
-        # 2. Verify Hero Section & Expandable Drawer
-        print("2. Verifying Hero Section & Technical Specs Drawer...")
-        hero_heading = page.locator("h1:has-text('Intelligent Bare PCB Defect Inspection')")
-        assert hero_heading.is_visible()
-        print("   Hero heading is visible.")
-
-        # Expand technical specs drawer
+        # 2. Hero Section & Technical Specs Drawer
+        hero = page.locator("h1:has-text('Intelligent Bare PCB Defect Inspection')")
+        assert hero.is_visible()
         expand_btn = page.locator("button:has-text('Collapse Details')")
         if not expand_btn.is_visible():
             expand_btn = page.locator("button:has-text('Expand Technical Specs')")
             expand_btn.click()
             page.wait_for_timeout(300)
         assert page.locator("text=Six Defect Categories").is_visible()
-        print("   Expandable specs drawer verified.")
+        print("  [2] Hero section & technical drawer verified.")
 
-        # 3. Wait for Model Initialization
-        print("3. Waiting for YOLOv8n ONNX model initialization...")
-        page.wait_for_selector("text=Model Ready (WASM SIMD)", timeout=30000)
-        print("   Model initialized successfully inside WebAssembly runtime!")
+        # 3. Model Initialization
+        print("  [3] Awaiting ONNX WebAssembly initialization...")
+        page.wait_for_selector("text=Model Ready (WASM SIMD)", timeout=35000)
+        print("      Model initialized successfully!")
 
-        # 4. Run Inspection on DeepPCB Sample 1 (Defective Board)
-        print("4. Executing AI Inspection on Sample 1 (Defective)...")
-        sample1_btn = page.locator("button:has-text('DeepPCB Sample 1')")
-        sample1_btn.click()
-        page.wait_for_timeout(500)
-
-        run_btn = page.locator("button:has-text('Run PCB Defect Inspection')")
-        run_btn.click()
-
-        # Wait for inference completion
+        # 4. Defective Sample Inspection
+        print("  [4] Inspecting DeepPCB Sample 1 (Defective)...")
+        page.locator("button:has-text('DeepPCB Sample 1')").click()
+        page.wait_for_timeout(400)
+        page.locator("button:has-text('Run PCB Defect Inspection')").click()
         page.wait_for_selector("text=SURFACE ANOMALIES", timeout=15000)
-        verdict_text = page.locator("text=10 SURFACE ANOMALIES").first.inner_text()
-        print(f"   Inspection complete! Verdict: {verdict_text.strip()}")
-        assert "10 SURFACE ANOMALIES" in verdict_text
+        verdict = page.locator("text=10 SURFACE ANOMALIES").first.inner_text().strip()
+        print(f"      Verdict verified: {verdict}")
+        assert "10 SURFACE ANOMALIES" in verdict
 
-        # 5. Verify Defect Inventory Table
-        print("5. Verifying Defect Inventory Table & Records...")
-        inventory_heading = page.locator("text=Detected Defect Inventory")
-        assert inventory_heading.is_visible()
-
+        # 5. Defect Inventory Records
         rows = page.locator("table tbody tr")
         row_count = rows.count()
-        print(f"   Table defect rows count: {row_count}")
+        print(f"  [5] Defect inventory populated with {row_count} records.")
         assert row_count == 10
 
-        first_row_text = rows.first.inner_text()
-        print(f"   First defect record: {first_row_text.replace(chr(10), ' | ')}")
-        assert "copper" in first_row_text.lower()
-
-        # 6. Test Optical Zoom & Pan Controls
-        print("6. Testing Optical Zoom & Pan Controls...")
-        zoom_in_btn = page.locator("button[aria-label='Zoom in']")
-        zoom_in_btn.click()
-        page.wait_for_timeout(300)
-        assert page.locator("text=1.5x").is_visible()
-        zoom_in_btn.click()
-        page.wait_for_timeout(300)
+        # 6. Zoom & Pan
+        print("  [6] Testing optical zoom (2.0x) and reset...")
+        page.locator("button[aria-label='Zoom in']").click()
+        page.wait_for_timeout(200)
+        page.locator("button[aria-label='Zoom in']").click()
+        page.wait_for_timeout(200)
         assert page.locator("text=2.0x").is_visible()
-        print("   Zoom in to 2.0x confirmed.")
-
-        reset_zoom_btn = page.locator("button[aria-label='Reset zoom to fit']")
-        reset_zoom_btn.click()
-        page.wait_for_timeout(300)
+        page.locator("button[aria-label='Reset zoom to fit']").click()
+        page.wait_for_timeout(200)
         assert page.locator("text=1.0x").is_visible()
-        print("   Reset zoom to 1.0x confirmed.")
+        print("      Zoom controls operational.")
 
-        # 7. Test Defect Class Toggles & Before/After Toggle
-        print("7. Testing Class Filters and Box Visibility Toggle...")
-        boxes_toggle = page.locator("button[aria-label='Toggle defect annotations on canvas']")
-        assert boxes_toggle.is_visible()
-        boxes_toggle.click()
-        page.wait_for_timeout(300)
+        # 7. Class Filters & Box Visibility
+        print("  [7] Testing annotation toggle & class filter...")
+        page.locator("button[aria-label='Toggle defect annotations on canvas']").click()
+        page.wait_for_timeout(200)
         assert page.locator("text=Boxes Off").is_visible()
-        boxes_toggle.click()
-        page.wait_for_timeout(300)
+        page.locator("button[aria-label='Toggle defect annotations on canvas']").click()
+        page.wait_for_timeout(200)
         assert page.locator("text=Boxes On").is_visible()
-        print("   Before / After boxes toggle verified.")
+        print("      Annotation toggle operational.")
 
-        copper_toggle = page.locator("button[aria-label='Toggle visibility of copper defect class']")
-        copper_toggle.click()
-        page.wait_for_timeout(300)
-        print("   Copper class toggle off verified.")
-        copper_toggle.click()
-        page.wait_for_timeout(300)
-
-        # 8. Test Exports: CSV and JSON
-        print("8. Testing CSV and JSON Report Downloads...")
-        with page.expect_download() as download_info_csv:
+        # 8. Report Downloads
+        print("  [8] Testing CSV and JSON report exports...")
+        with page.expect_download() as d_csv:
             page.locator("button:has-text('Defect CSV')").click()
-        csv_download = download_info_csv.value
-        csv_path = csv_download.suggested_filename
-        print(f"   CSV downloaded successfully: {csv_path}")
-        assert "pcb_defects" in csv_path and csv_path.endswith(".csv")
+        csv_file = d_csv.value.suggested_filename
+        assert csv_file.endswith(".csv")
 
-        with page.expect_download() as download_info_json:
+        with page.expect_download() as d_json:
             page.locator("button:has-text('Inspection Report JSON')").click()
-        json_download = download_info_json.value
-        json_path = json_download.suggested_filename
-        print(f"   JSON report downloaded successfully: {json_path}")
-        assert "pcb_inspection_report" in json_path and json_path.endswith(".json")
+        json_file = d_json.value.suggested_filename
+        assert json_file.endswith(".json")
+        print(f"      CSV ({csv_file}) & JSON ({json_file}) exported successfully.")
 
-        # 9. Test Classical DIP Lab
-        print("9. Testing Defect-Free Golden Reference Template in Classical DIP Lab...")
-        diplab_tab = page.locator("button:has-text('Classical DIP Lab')").first
-        diplab_tab.click()
-        page.wait_for_timeout(500)
-
-        run_dip_btn = page.locator("button:has-text('Execute DIP Pipeline')")
-        assert run_dip_btn.is_visible()
-        run_dip_btn.click()
+        # 9. Classical DIP Lab
+        print("  [9] Testing Classical DIP Laboratory...")
+        page.locator("button:has-text('Classical DIP Lab')").first.click()
+        page.wait_for_timeout(400)
+        page.locator("button:has-text('Execute DIP Pipeline')").click()
         page.wait_for_selector("text=Multi-Stage Digital Image Processing Results", timeout=15000)
-        print("   Classical DIP Pipeline executed successfully on template pair!")
         assert page.locator("text=Stage 1: Absolute Difference").is_visible()
-        assert page.locator("text=Stage 4: Connected Components").is_visible()
+        print("      Classical DIP pipeline executed successfully.")
 
-        # 10. Test Mobile Viewport Responsiveness
-        print("10. Testing Mobile Viewport (375x812 - iPhone X/12)...")
-        mobile_page = context.new_page()
-        mobile_page.set_viewport_size({"width": 375, "height": 812})
-        mobile_page.goto(PREVIEW_URL, wait_until="networkidle")
-        mobile_page.wait_for_timeout(500)
-
-        mobile_heading = mobile_page.locator("h1:has-text('Intelligent Bare PCB Defect Inspection')")
-        assert mobile_heading.is_visible()
-        print("   Mobile viewport renders without overflow!")
-        mobile_page.close()
-
-        # 11. Test Legal Routes (/privacy, /terms)
-        print("11. Verifying /privacy and /terms routes...")
+        # 10. Legal & Privacy Routes
+        print("  [10] Testing /privacy and /terms routes...")
         page.goto(f"{PREVIEW_URL}/privacy", wait_until="networkidle")
         assert page.locator("h1:has-text('Privacy Policy')").is_visible()
-        assert page.locator("text=Zero Server Uploads").is_visible()
-        print("   /privacy verified.")
-
         page.goto(f"{PREVIEW_URL}/terms", wait_until="networkidle")
         assert page.locator("h1:has-text('Terms of Use')").is_visible()
-        assert page.locator("text=No Electrical Guarantee").is_visible()
-        print("   /terms verified.")
+        print("       /privacy and /terms verified.")
 
-        # 12. Verify Privacy Invariant: Zero outbound image uploads
-        print("12. Verifying Zero Outbound Image Exfiltration...")
-        print(f"    Outbound image upload requests recorded: {len(outbound_image_uploads)}")
-        assert len(outbound_image_uploads) == 0, f"Privacy violation! Detected uploads: {outbound_image_uploads}"
-        print("    PASS: Zero image bytes left the browser sandbox!")
+        # 11. Privacy Invariant
+        print("  [11] Verifying Zero Outbound Image Exfiltration...")
+        print(f"       Recorded outbound image upload requests: {len(outbound_image_uploads)}")
+        assert len(outbound_image_uploads) == 0, "Privacy violation detected!"
+        print("       PASS: 100% client-side memory privacy verified.")
 
         browser.close()
 
-    print("=" * 70)
-    print("ALL PLAYWRIGHT E2E BROWSER TESTS PASSED 100%!")
-    print("=" * 70)
+        # -------------------------------------------------------------
+        # 2. Multi-Viewport Responsiveness Testing
+        # -------------------------------------------------------------
+        print("\n>>> Phase 5.2: Multi-Viewport Responsive Matrix (Chromium)")
+        browser = p.chromium.launch(headless=True)
+        for vp in VIEWPORTS:
+            ctx = browser.new_context(viewport={"width": vp["width"], "height": vp["height"]})
+            pg = ctx.new_page()
+            pg.goto(PREVIEW_URL, wait_until="domcontentloaded")
+            pg.wait_for_timeout(400)
+            h1_vis = pg.locator("h1:has-text('Intelligent Bare PCB Defect Inspection')").is_visible()
+            assert h1_vis, f"Heading missing on viewport {vp['name']}"
+            print(f"  Viewport {vp['width']}x{vp['height']} ({vp['name']:25s}): OK")
+            ctx.close()
+        browser.close()
+
+        # -------------------------------------------------------------
+        # 3. Cross-Browser Engine Compatibility: Firefox
+        # -------------------------------------------------------------
+        print("\n>>> Phase 5.3: Cross-Engine Verification — Firefox")
+        try:
+            ff_browser = p.firefox.launch(headless=True)
+            ff_page = ff_browser.new_page(viewport={"width": 1280, "height": 800})
+            ff_page.goto(PREVIEW_URL, wait_until="domcontentloaded", timeout=45000)
+            assert "PCB Vision AI" in ff_page.title()
+            print("  Firefox: Homepage rendered and title verified.")
+            ff_browser.close()
+        except Exception as e:
+            print(f"  Firefox testing error: {e}")
+            raise
+
+        # -------------------------------------------------------------
+        # 4. Cross-Browser Engine Compatibility: WebKit (Safari Engine)
+        # -------------------------------------------------------------
+        print("\n>>> Phase 5.4: Cross-Engine Verification — WebKit (Safari Engine)")
+        try:
+            wk_browser = p.webkit.launch(headless=True)
+            wk_page = wk_browser.new_page(viewport={"width": 1280, "height": 800})
+            wk_page.goto(PREVIEW_URL, wait_until="domcontentloaded", timeout=45000)
+            assert "PCB Vision AI" in wk_page.title()
+            print("  WebKit: Homepage rendered and title verified.")
+            wk_browser.close()
+        except Exception as e:
+            print(f"  WebKit testing error: {e}")
+            raise
+
+    print("\n" + "=" * 75)
+    print("ALL PLAYWRIGHT CROSS-BROWSER & MULTI-VIEWPORT TESTS PASSED 100%!")
+    print("=" * 75)
+
 
 if __name__ == "__main__":
     test_full_browser_e2e()

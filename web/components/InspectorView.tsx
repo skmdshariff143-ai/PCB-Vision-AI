@@ -727,6 +727,16 @@ export const InspectorView: React.FC = () => {
             )}
           </div>
 
+          {/* Domain Boundary & OOD Advisory */}
+          <div className="p-4 rounded-2xl border border-slate-800 bg-slate-900 text-slate-400 space-y-2 text-xs">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-300 font-mono text-[11px] uppercase tracking-wider">
+              <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Domain &amp; OOD Scope
+            </div>
+            <p className="text-[11px] leading-relaxed">
+              Trained exclusively on <strong className="text-slate-200">bare printed circuit boards</strong> (DeepPCB benchmark). Populated boards with ICs, SMT passives, or non-PCB images represent out-of-distribution inputs. For defect-free reference templates, threshold &ge; 45% is recommended.
+            </p>
+          </div>
+
           {/* Performance Telemetry */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300 font-mono">
